@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outliner and Pages</title>
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="toolbar">
+        <button onclick="toggleFilesMenu()">Files</button>
+        <div class="files-menu" id="files-menu">
+            <button onclick="showFileDialog('create')">Create Quickbrain file</button>
+            <button onclick="openQuickbrainFile()">Open Quickbrain file</button>
+            <button onclick="saveQuickbrainFile()">Save Quickbrain file</button>
+            <button onclick="saveQuickbrainFileAs()">Save Quickbrain file as</button>
+            <button onclick="saveQuickbrainFileAsBackup()">Save Quickbrain file as backup</button>
+            <button onclick="closeFilesMenu()">Close</button>
+        </div>
+        <button onclick="toggleShortcutsMenu()">Shortcuts</button>
+        <div class="shortcuts-menu" id="shortcuts-menu">
+            <button onclick="addTopic()">Add topic: ctrl + enter or insert key</button>
+            <button onclick="addChild()">Add child: alt + enter or insert key</button>
+            <button onclick="editSelectedTopic()">Edit topic: alt + e</button>
+            <button onclick="deleteTopic()">Delete topic: ctrl + x</button>
+            <button onclick="copyTopic()">Copy topic: ctrl + c</button>
+            <button onclick="pasteTopic()">Paste topic: ctrl + v</button>
+            <button onclick="toggleFocus()">Focus/Defocus: ctrl + f</button>
+            <button onclick="closeShortcutsMenu()">Close</button>
+            <p style="margin-top: 10px; font-size: 12px; color: #666;">
+                Use keyboard arrow keys to move among topics.<br>
+                Use ctrl + arrow key to move a topic up, down, left, or right.<br>
+                Single click to select a topic; double click to edit it.
+            </p>
+        </div>
+        <button onclick="toggleSection('outliner')">Outliner</button>
+        <button onclick="toggleSection('pages')">Pages</button>
+        <button onclick="toggleSection('ai')">Deep Think</button>
+        <button onclick="toggleSection('web')">AI & Web</button>
+        <button onclick="toggleInstructions()">?</button>
+        <button id="focus-button" onclick="toggleFocus()">Focus</button>
+        <!-- Language toggle button -->
+        <button id="language-toggle" onclick="toggleLanguage()">中文</button>
+        <!-- Agent button -->
+        <button onclick="generateAgentText()">Agent</button>
+    </div>
+    <div class="container">
+        <div class="outliner-container" id="outliner-container">
+            <h1>Outliner <span class="panel-toggle" onclick="toggleFullScreen('outliner')">⤢</span></h1>
+            <div class="icon-bar">
+                <i class="fas fa-plus" title="New Topic" onclick="addTopic()"></i>
+                <i class="fas fa-level-down-alt" title="Add Child" onclick="addChild()"></i>
+                <i class="fas fa-trash" title="Delete" onclick="deleteTopic()"></i>
+                <i class="fas fa-arrow-up" title="Move Up" onclick="moveUp()"></i>
+                <i class="fas fa-arrow-down" title="Move Down" onclick="moveDown()"></i>
+                <i class="fas fa-arrow-left" title="Move Left" onclick="moveLeft()"></i>
+                <i class="fas fa-arrow-right" title="Move Right" onclick="moveRight()"></i>
+                <i class="fas fa-compress" title="Collapse All" onclick="collapseAll()"></i>
+                <i class="fas fa-expand" title="Expand All" onclick="expandAll()"></i>
+                <i class="fas fa-undo" title="Undo" onclick="undo()"></i>
+                <i class="fas fa-redo" title="Redo" onclick="redo()"></i>
+            </div>
+            <div class="instructions-panel" id="instructions-panel">
+                <p>1. Single Click a topic to select it.</p>
+                <p>2. Double-click a topic to edit it.</p>
+                <p>3. Use keyboard arrow keys to navigate the topics in the outliner.</p>
+                <p>4. Use Ctrl + Arrow Keys to move a topic up, down, left, or right in the outliner.</p>
+                <p>5. <strong>Important:</strong> Click the number of a topic to hide/show its child levels.</p>
+                <p>6. <strong>Important:</strong> Click the robot icon in the bar to open/close the AI Chatbot.</p>
+                <p><strong>Note:</strong> Every topic has its own 'page' in the word processor. Content entered into the
+                    word processor is automatically appended to the currently selected outliner topic. That content will
+                    appear again whenever you select that topic in the future.</p>
+            </div>
+            <ul class="outliner" id="outliner">
+                <li><span class="topic-number">1</span><span>New Topic</span></li>
+            </ul>
+        </div>
+        <div class="splitter" id="splitter"></div>
+        <div class="word-processor-container" id="pages-container">
+            <h1>Pages <span class="panel-toggle" onclick="toggleFullScreen('pages')">⤢</span></h1>
+            <div class="icon-bar">
+                <i class="fas fa-upload" title="Upload .docx" onclick="openDocx()"></i>
+                <i class="fas fa-download" title="Download .docx" onclick="saveHtmlAsDocx()"></i>
+            </div>
+            <div id="editor"></div>
+        </div>
+        <div class="splitter" id="chatbot-splitter"></div>
+        <div class="web-panel" id="web-container">
+            <div class="web-tabs" id="web-tabs">
+                <div class="web-tab active" onclick="switchTab(0)">Kimi.ai</div>
+                <div class="web-tab" onclick="switchTab(1)">qwenlm.ai</div>
+                <div class="web-tab" onclick="switchTab(2)">Deepseek.ai</div>
+            </div>
+            <div class="web-controls">
+                <input type="text" id="web-address-bar" placeholder="Enter a URL or search..."
+                    onkeypress="handleAddressBar(event)" />
+                <button onclick="goToUrl()">Go</button>
+                <button onclick="newTab()">+</button>
+                <span class="panel-toggle" onclick="toggleFullScreen('web')">⤢</span>
+            </div>
+            <iframe id="webview" src="about:blank"></iframe>
+        </div>
+        <div class="chatbot-panel" id="ai-container" style="display: none;">
+            <div class="chatbot-header">
+                <select id="chatbot-select">
+                    <option value="Deepseek">Deepseek</option>
+                    <option value="Kimi">Kimi</option>
+                    <option value="Ernie Bot">Ernie Bot</option>
+                    <option value="Qwen">Qwen</option>
+                </select>
+                <button class="deep-think-button" onclick="deepThink()">Deep Think</button>
+                <button class="clear-button" onclick="clearChat()">🗑️</button>
+                <i class="fas fa-times" title="Close Chatbot" onclick="toggleSection('ai')"></i>
+            </div>
+            <div class="chatbot-messages" id="chatbot-messages">
+                <!-- Messages will be dynamically added here -->
+            </div>
+            <div class="chatbot-iconbar">
+                <i class="fas fa-paperclip" title="Attach File"></i>
+                <i class="fas fa-comment-dots" title="Prompts"></i>
+            </div>
+            <div class="chatbot-input">
+                <textarea id="chatbot-input" placeholder="Type a message..." autocomplete="off" rows="3"></textarea>
+                <button type="button" onclick="sendChatMessage()"><i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Dialog -->
+    <div class="file-dialog" id="file-dialog">
+        <div class="folder-selector">
+            <input type="text" id="folder-name" placeholder="Enter folder name">
+            <button onclick="addFolder()">Add Folder</button>
+        </div>
+        <select id="folder-select">
+            <option value="">Select a folder</option>
+            <!-- Folders will be dynamically added here -->
+        </select>
+        <input type="text" id="file-name" placeholder="File name">
+        <button onclick="handleFileAction()">OK</button>
+        <button onclick="closeFileDialog()">Cancel</button>
+    </div>
+
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.8/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.28.1/docxtemplater.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.6.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html-docx-js/dist/html-docx.js"></script>
+
+    <!-- Custom JavaScript files -->
+    <script src="script.js"></script>
+    <script src="functions.js"></script>
+    <script src="ui-functions.js"></script>
+    <script src="web-functions.js"></script>
+    <script src="outline-functions.js"></script>
+</body>
+
+</html>
